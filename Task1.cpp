@@ -9,7 +9,7 @@ using namespace std;
 
 Mat img;
 int Isize, Jsize;
-int r = 200; //радиус окрестности, в которой высчитывается формула
+int r = 40; //радиус окрестности, в которой высчитывается формула
 double k = -0.2; //эмпирически определяемый параметр
 
 void make_black(int i, int j)
@@ -39,10 +39,10 @@ void niblack_algorithm(double** brightness)
 			{
 				double b = brightness[i1][j1];
 				sqrnDeviation += (b - average) * (b - average);
-				//sqrnDeviation += b * b;
 			}
+		
 		threshold = average + k * sqrt(sqrnDeviation / n);
-		//threshold = average + k * sqrt(-average * average + sqrnDeviation / n);
+		//if (sqrnDeviation / n < 256*256/50) threshold += 10*k * sqrt(sqrnDeviation / n);
 		if (brightness[i][0] < threshold) make_black(i, 0); else make_white(i, 0);
 
 		for (int j = 1; j < Jsize; j++)
@@ -64,14 +64,13 @@ void niblack_algorithm(double** brightness)
 				if (j - r - 1 >= 0 && k1 >= 0 && k1 < Isize) b1 = brightness[k1][j - r - 1];
 				double b2 = average;
 				if (j + r < Jsize && k1 >= 0 && k1 < Isize) b2 = brightness[k1][j + r];
-				//sqrnDeviation -= b1 * b1;
-				//sqrnDeviation += b2 * b2;
 				sqrnDeviation -= (b1 - average) * (b1 - average);
 				sqrnDeviation += (b2 - average) * (b2 - average);
 			}
 
+			if (sqrnDeviation / n < 256 * 256 / 4) sqrnDeviation *= 2;//!!
 			threshold = average + k * sqrt(sqrnDeviation / n);
-			//threshold = average + k * sqrt(-average * average + sqrnDeviation / n);
+			//if (sqrnDeviation / n < 256*256/64) threshold += 10*k*sqrt(sqrnDeviation/n);
 			if (brightness[i][j] < threshold) make_black(i, j); else make_white(i, j);
 		}
 	}
@@ -79,7 +78,7 @@ void niblack_algorithm(double** brightness)
 
 int main()
 {
-	img = imread("../test1.png", IMREAD_COLOR);
+	img = imread("../test2.png", IMREAD_COLOR);
 	if (img.empty())
 	{
 		std::cout << "error" << endl;
@@ -87,6 +86,8 @@ int main()
 	}
 	Isize = img.rows;
 	Jsize = img.cols;
+
+	cout << Isize << ' ' << Jsize << endl;
 
 	cvtColor(img, img, COLOR_BGR2GRAY);
 
